@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧环卫垃圾分类管理系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+        }
+        .header {
+            background-color: #409EFF;
+            color: white;
+            padding: 0 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,.12), 0 0 6px rgba(0,0,0,.04);
+        }
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #304156;
+            overflow-y: auto;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+            background-color: #f0f2f5;
+            overflow-y: auto;
+        }
+        .dashboard-card {
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #409EFF;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 8px;
+        }
+        .chart-container {
+            height: 400px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 头部导航 -->
+        <el-header class="header" height="60px">
+            <el-row type="flex" justify="space-between" align="middle" style="height: 100%;">
+                <el-col>
+                    <h2 style="margin: 0;">智慧环卫垃圾分类管理系统</h2>
+                </el-col>
+                <el-col style="text-align: right;">
+                    <el-dropdown @command="handleCommand">
+                        <span class="el-dropdown-link">
+                            管理员 <i class="el-icon-arrow-down el-icon--right"></i>
+                        </span>
+                        <el-dropdown-menu slot="dropdown">
+                            <el-dropdown-item command="profile">个人设置</el-dropdown-item>
+                            <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </el-dropdown>
+                </el-col>
+            </el-row>
+        </el-header>
+
+        <div class="main-container">
+            <!-- 侧边栏 -->
+            <el-aside class="sidebar" width="200px">
+                <el-menu
+                    :default-active="activeMenu"
+                    class="el-menu-vertical"
+                    background-color="#304156"
+                    text-color="#bfcbd9"
+                    active-text-color="#409EFF"
+                    @select="handleMenuSelect">
+                    
+                    <el-menu-item index="dashboard">
+                        <i class="el-icon-s-platform"></i>
+                        <span slot="title">数据概览</span>
+                    </el-menu-item>
+                    
+                    <el-menu-item index="users">
+                        <i class="el-icon-user"></i>
+                        <span slot="title">用户管理</span>
+                    </el-menu-item>
+                    
+                    <el-menu-item index="devices">
+                        <i class="el-icon-monitor"></i>
+                        <span slot="title">设备监控</span>
+                    </el-menu-item>
+                    
+                    <el-menu-item index="disposal">
+                        <i class="el-icon-delete"></i>
+                        <span slot="title">投放管理</span>
+                    </el-menu-item>
+                    
+                    <el-menu-item index="collection">
+                        <i class="el-icon-truck"></i>
+                        <span slot="title">收运监管</span>
+                    </el-menu-item>
+                    
+                    <el-menu-item index="violations">
+                        <i class="el-icon-warning"></i>
+                        <span slot="title">违规管理</span>
+                    </el-menu-item>
+                    
+                    <el-menu-item index="traceability">
+                        <i class="el-icon-search"></i>
+                        <span slot="title">溯源查询</span>
+                    </el-menu-item>
+                    
+                    <el-menu-item index="statistics">
+                        <i class="el-icon-s-data"></i>
+                        <span slot="title">统计分析</span>
+                    </el-menu-item>
+                    
+                    <el-menu-item index="education">
+                        <i class="el-icon-reading"></i>
+                        <span slot="title">教育管理</span>
+                    </el-menu-item>
+                    
+                    <el-menu-item index="enforcement">
+                        <i class="el-icon-s-check"></i>
+                        <span slot="title">执法支持</span>
+                    </el-menu-item>
+                </el-menu>
+            </el-aside>
+
+            <!-- 主内容区 -->
+            <el-main class="content">
+                <!-- 数据概览页面 -->
+                <div v-if="activeMenu === 'dashboard'">
+                    <h3>数据概览</h3>
+                    
+                    <!-- 统计卡片 -->
+                    <el-row :gutter="20" style="margin-bottom: 20px;">
+                        <el-col :span="6">
+                            <el-card class="stat-card">
+                                <div class="stat-number">{{ statistics.totalDisposals || 0 }}</div>
+                                <div class="stat-label">今日投放次数</div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-card class="stat-card">
+                                <div class="stat-number">{{ statistics.activeUsers || 0 }}</div>
+                                <div class="stat-label">活跃用户数</div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-card class="stat-card">
+                                <div class="stat-number">{{ statistics.onlineDevices || 0 }}</div>
+                                <div class="stat-label">在线设备数</div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-card class="stat-card">
+                                <div class="stat-number">{{ (statistics.collectionEfficiency || 0).toFixed(1) }}%</div>
+                                <div class="stat-label">收运效率</div>
+                            </el-card>
+                        </el-col>
+                    </el-row>
+
+                    <!-- 图表区域 -->
+                    <el-row :gutter="20">
+                        <el-col :span="12">
+                            <el-card class="dashboard-card">
+                                <div slot="header">
+                                    <span>投放量趋势</span>
+                                </div>
+                                <div id="disposalChart" class="chart-container"></div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-card class="dashboard-card">
+                                <div slot="header">
+                                    <span>垃圾分类占比</span>
+                                </div>
+                                <div id="wasteTypeChart" class="chart-container"></div>
+                            </el-card>
+                        </el-col>
+                    </el-row>
+
+                    <!-- 实时告警 -->
+                    <el-card class="dashboard-card">
+                        <div slot="header">
+                            <span>实时告警</span>
+                        </div>
+                        <el-table :data="alerts" style="width: 100%">
+                            <el-table-column prop="type" label="告警类型" width="120">
+                                <template slot-scope="scope">
+                                    <el-tag :type="getAlertTagType(scope.row.level)">
+                                        {{ getAlertTypeName(scope.row.type) }}
+                                    </el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="message" label="告警信息"></el-table-column>
+                            <el-table-column prop="timestamp" label="时间" width="180">
+                                <template slot-scope="scope">
+                                    {{ formatDateTime(scope.row.timestamp) }}
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-card>
+                </div>
+
+                <!-- 用户管理页面 -->
+                <div v-if="activeMenu === 'users'">
+                    <h3>用户管理</h3>
+                    
+                    <el-row style="margin-bottom: 20px;">
+                        <el-col :span="8">
+                            <el-input
+                                v-model="userSearch"
+                                placeholder="搜索用户姓名或手机号"
+                                prefix-icon="el-icon-search"
+                                @input="searchUsers">
+                            </el-input>
+                        </el-col>
+                        <el-col :span="4" :offset="12" style="text-align: right;">
+                            <el-button type="primary" @click="showAddUserDialog">添加用户</el-button>
+                        </el-col>
+                    </el-row>
+
+                    <el-table :data="users" style="width: 100%">
+                        <el-table-column prop="userId" label="用户ID" width="120"></el-table-column>
+                        <el-table-column prop="name" label="姓名" width="100"></el-table-column>
+                        <el-table-column prop="phone" label="手机号" width="120"></el-table-column>
+                        <el-table-column prop="address" label="地址"></el-table-column>
+                        <el-table-column prop="isActive" label="状态" width="80">
+                            <template slot-scope="scope">
+                                <el-tag :type="scope.row.isActive ? 'success' : 'danger'">
+                                    {{ scope.row.isActive ? '活跃' : '停用' }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="createdAt" label="注册时间" width="180">
+                            <template slot-scope="scope">
+                                {{ formatDateTime(scope.row.createdAt) }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="150">
+                            <template slot-scope="scope">
+                                <el-button size="mini" @click="editUser(scope.row)">编辑</el-button>
+                                <el-button size="mini" type="danger" @click="deleteUser(scope.row)">删除</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+
+                    <el-pagination
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="userPagination.currentPage"
+                        :page-sizes="[10, 20, 50, 100]"
+                        :page-size="userPagination.pageSize"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="userPagination.total"
+                        style="margin-top: 20px; text-align: right;">
+                    </el-pagination>
+                </div>
+
+                <!-- 设备监控页面 -->
+                <div v-if="activeMenu === 'devices'">
+                    <h3>设备监控</h3>
+                    
+                    <el-row :gutter="20" style="margin-bottom: 20px;">
+                        <el-col :span="6">
+                            <el-card class="stat-card">
+                                <div class="stat-number" style="color: #67C23A;">{{ deviceStats.online || 0 }}</div>
+                                <div class="stat-label">在线设备</div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-card class="stat-card">
+                                <div class="stat-number" style="color: #F56C6C;">{{ deviceStats.offline || 0 }}</div>
+                                <div class="stat-label">离线设备</div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-card class="stat-card">
+                                <div class="stat-number" style="color: #E6A23C;">{{ deviceStats.maintenance || 0 }}</div>
+                                <div class="stat-label">维护中</div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-card class="stat-card">
+                                <div class="stat-number">{{ (deviceStats.uptime || 0).toFixed(1) }}%</div>
+                                <div class="stat-label">设备在线率</div>
+                            </el-card>
+                        </el-col>
+                    </el-row>
+
+                    <el-table :data="devices" style="width: 100%">
+                        <el-table-column prop="deviceId" label="设备ID" width="120"></el-table-column>
+                        <el-table-column prop="deviceType" label="设备类型" width="100"></el-table-column>
+                        <el-table-column prop="location" label="位置"></el-table-column>
+                        <el-table-column prop="status" label="状态" width="100">
+                            <template slot-scope="scope">
+                                <el-tag :type="getDeviceStatusType(scope.row.status)">
+                                    {{ getDeviceStatusName(scope.row.status) }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="lastHeartbeat" label="最后心跳" width="180">
+                            <template slot-scope="scope">
+                                {{ formatDateTime(scope.row.lastHeartbeat) }}
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="150">
+                            <template slot-scope="scope">
+                                <el-button size="mini" @click="viewDeviceDetail(scope.row)">详情</el-button>
+                                <el-button size="mini" type="warning" @click="restartDevice(scope.row)">重启</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+
+                <!-- 其他页面占位 -->
+                <div v-if="activeMenu === 'disposal'">
+                    <h3>投放管理</h3>
+                    <p>投放记录查询和管理功能开发中...</p>
+                </div>
+
+                <div v-if="activeMenu === 'collection'">
+                    <h3>收运监管</h3>
+                    <p>收运任务监控和管理功能开发中...</p>
+                </div>
+
+                <div v-if="activeMenu === 'violations'">
+                    <h3>违规管理</h3>
+                    <p>违规检测和处理功能开发中...</p>
+                </div>
+
+                <div v-if="activeMenu === 'traceability'">
+                    <h3>溯源查询</h3>
+                    <p>垃圾溯源查询功能开发中...</p>
+                </div>
+
+                <div v-if="activeMenu === 'statistics'">
+                    <h3>统计分析</h3>
+                    <p>数据统计和分析功能开发中...</p>
+                </div>
+
+                <div v-if="activeMenu === 'education'">
+                    <h3>教育管理</h3>
+                    <p>教育内容管理功能开发中...</p>
+                </div>
+
+                <div v-if="activeMenu === 'enforcement'">
+                    <h3>执法支持</h3>
+                    <p>执法报告和支持功能开发中...</p>
+                </div>
+            </el-main>
+        </div>
+
+        <!-- 添加用户对话框 -->
+        <el-dialog title="添加用户" :visible.sync="addUserDialogVisible" width="500px">
+            <el-form :model="newUser" :rules="userRules" ref="userForm" label-width="80px">
+                <el-form-item label="姓名" prop="name">
+                    <el-input v-model="newUser.name"></el-input>
+                </el-form-item>
+                <el-form-item label="手机号" prop="phone">
+                    <el-input v-model="newUser.phone"></el-input>
+                </el-form-item>
+                <el-form-item label="地址" prop="address">
+                    <el-input v-model="newUser.address"></el-input>
+                </el-form-item>
+                <el-form-item label="身份证" prop="idCard">
+                    <el-input v-model="newUser.idCard"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="addUserDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="addUser">确定</el-button>
+            </div>
+        </el-dialog>
+    </div>
+
+    <!-- 引入Vue和Element UI -->
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://unpkg.com/echarts@5/dist/echarts.min.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

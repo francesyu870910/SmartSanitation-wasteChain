@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统功能测试</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 3px;
+            white-space: pre-wrap;
+        }
+        .success {
+            border-left: 4px solid #28a745;
+        }
+        .error {
+            border-left: 4px solid #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 智慧环卫系统功能测试</h1>
+        
+        <div class="test-section">
+            <h3>📊 报表功能测试</h3>
+            <button class="test-button" onclick="testDailyReport()">测试日报生成</button>
+            <button class="test-button" onclick="testMonthlyReport()">测试月报生成</button>
+            <button class="test-button" onclick="testKpiStats()">测试KPI统计</button>
+            <button class="test-button" onclick="testTrendAnalysis()">测试趋势分析</button>
+            <div id="reportResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🏥 系统健康检查</h3>
+            <button class="test-button" onclick="testHealth()">检查系统健康状态</button>
+            <div id="healthResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📈 演示数据测试</h3>
+            <button class="test-button" onclick="testDemoStats()">获取演示统计数据</button>
+            <div id="demoResult" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testApi(url, resultId, description) {
+            const resultDiv = document.getElementById(resultId);
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = `正在测试 ${description}...`;
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                resultDiv.textContent = `✅ ${description} 成功!\n\n` + JSON.stringify(data, null, 2);
+                resultDiv.className = 'result success';
+            } catch (error) {
+                resultDiv.textContent = `❌ ${description} 失败!\n\n错误: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        function testDailyReport() {
+            testApi('/api/reports/daily', 'reportResult', '日报生成');
+        }
+
+        function testMonthlyReport() {
+            testApi('/api/reports/monthly?year=2024&month=1', 'reportResult', '月报生成');
+        }
+
+        function testKpiStats() {
+            testApi('/api/reports/kpi', 'reportResult', 'KPI统计');
+        }
+
+        function testTrendAnalysis() {
+            testApi('/api/reports/trend', 'reportResult', '趋势分析');
+        }
+
+        function testHealth() {
+            testApi('/actuator/health', 'healthResult', '系统健康检查');
+        }
+
+        function testDemoStats() {
+            testApi('/api/stats', 'demoResult', '演示统计数据');
+        }
+
+        // 页面加载时自动测试系统健康状态
+        window.onload = function() {
+            testHealth();
+        };
+    </script>
+</body>
+</html>

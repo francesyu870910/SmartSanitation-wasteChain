@@ -1,0 +1,4 @@
+com\smartwaste\EnvironmentalCompilationTest.class
+com\smartwaste\domain\service\impl\DeviceServiceImplTest.class
+com\smartwaste\integration\ServiceIntegrationTest.class
+com\smartwaste\CompilationTest.class
