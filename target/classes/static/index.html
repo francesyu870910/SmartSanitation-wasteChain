@@ -3,237 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧环卫垃圾分类管理系统</title>
+    <title>智慧环卫垃圾分类全链条智能监管系统</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .nav-link {
-            color: rgba(255,255,255,0.8) !important;
-            transition: all 0.3s;
-            margin: 2px 0;
-            border-radius: 8px;
-        }
-        .nav-link:hover, .nav-link.active {
-            color: white !important;
-            background-color: rgba(255,255,255,0.1);
-            transform: translateX(5px);
-        }
-        .card {
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: all 0.3s;
-            border-radius: 12px;
-        }
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
-        }
-        .stat-card {
+        .hero-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            position: relative;
-            overflow: hidden;
+            padding: 80px 0;
         }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-            transform: translate(30px, -30px);
+        .feature-card {
+            transition: transform 0.3s;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        .alert-critical { 
-            border-left: 4px solid #dc3545; 
-            background-color: rgba(220, 53, 69, 0.05);
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
         }
-        .alert-high { 
-            border-left: 4px solid #fd7e14; 
-            background-color: rgba(253, 126, 20, 0.05);
-        }
-        .alert-medium { 
-            border-left: 4px solid #ffc107; 
-            background-color: rgba(255, 193, 7, 0.05);
-        }
-        .alert-low { 
-            border-left: 4px solid #20c997; 
-            background-color: rgba(32, 201, 151, 0.05);
-        }
-        .status-online { 
-            color: #28a745; 
-            animation: pulse 2s infinite;
-        }
-        .status-offline { color: #dc3545; }
-        .status-maintenance { color: #ffc107; }
-        .status-error { color: #dc3545; }
-        .status-pending { color: #6c757d; }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        
-        .progress-animated {
-            background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
-            background-size: 1rem 1rem;
-            animation: progress-bar-stripes 1s linear infinite;
-        }
-        
-        @keyframes progress-bar-stripes {
-            0% { background-position: 1rem 0; }
-            100% { background-position: 0 0; }
-        }
-        
-        .container-card {
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        .container-card:hover {
-            transform: scale(1.02);
-        }
-        
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(0,0,0,.3);
-            border-radius: 50%;
-            border-top-color: #007bff;
-            animation: spin 1s ease-in-out infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1050;
-            min-width: 300px;
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.5s;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .table-hover tbody tr:hover {
-            background-color: rgba(0,0,0,.02);
-            transform: scale(1.01);
-            transition: all 0.2s;
-        }
-        
-        .btn {
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-        
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        .feature-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- 侧边栏 -->
-            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <div class="text-center mb-4">
-                        <h4 class="text-white">
-                            <i class="bi bi-recycle"></i>
-                            智慧环卫
-                        </h4>
-                    </div>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="#" onclick="showDashboard()">
-                                <i class="bi bi-speedometer2"></i> 仪表板
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showDevices()">
-                                <i class="bi bi-cpu"></i> 设备管理
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showContainers()">
-                                <i class="bi bi-trash"></i> 垃圾桶监控
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showAlerts()">
-                                <i class="bi bi-exclamation-triangle"></i> 报警管理
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showUsers()">
-                                <i class="bi bi-people"></i> 用户管理
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showVehicles()">
-                                <i class="bi bi-truck"></i> 车辆管理
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showPoints()">
-                                <i class="bi bi-star"></i> 积分管理
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-recycle"></i>
+                智慧环卫系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">功能特性</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="reports.html">报表管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="test-reports.html">系统测试</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-            <!-- 主内容区 -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2" id="page-title">系统仪表板</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <div class="btn-group me-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshData()">
-                                <i class="bi bi-arrow-clockwise"></i> 刷新
-                            </button>
+    <!-- 主标题区域 -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 mb-4">智慧环卫垃圾分类全链条智能监管系统</h1>
+            <p class="lead mb-4">基于物联网、人工智能和大数据技术的智能垃圾分类管理平台</p>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="admin.html" class="btn btn-light btn-lg w-100">
+                                <i class="bi bi-speedometer2"></i><br>
+                                管理后台
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="reports.html" class="btn btn-outline-light btn-lg w-100">
+                                <i class="bi bi-graph-up"></i><br>
+                                报表管理
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="test-reports.html" class="btn btn-outline-light btn-lg w-100">
+                                <i class="bi bi-gear"></i><br>
+                                系统测试
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="/h2-console" class="btn btn-outline-light btn-lg w-100" target="_blank">
+                                <i class="bi bi-database"></i><br>
+                                数据库
+                            </a>
                         </div>
                     </div>
                 </div>
-
-                <!-- 内容区域 -->
-                <div id="content-area">
-                    <!-- 仪表板内容将在这里动态加载 -->
-                </div>
-            </main>
-        </div>
-    </div>
-
-    <!-- 通知容器 -->
-    <div id="notification-container" class="notification"></div>
-
-    <!-- 加载遮罩 -->
-    <div id="loading-overlay" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50" style="z-index: 9999;">
-        <div class="d-flex justify-content-center align-items-center h-100">
-            <div class="text-center text-white">
-                <div class="loading-spinner mb-3"></div>
-                <h5>加载中...</h5>
             </div>
         </div>
-    </div>
+    </section>
+
+    <!-- 功能特性 -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="display-5">系统功能模块</h2>
+                    <p class="lead text-muted">全链条智能监管，实现垃圾分类的数字化管理</p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-person-check"></i>
+                        </div>
+                        <h5>智能身份识别</h5>
+                        <p class="text-muted">支持人脸识别、二维码扫描、IC卡等多种身份验证方式，确保投放行为可追溯。</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <h5>收运监管</h5>
+                        <p class="text-muted">实时监控收运车辆轨迹，记录收运过程，防止混装混运，提高收运效率。</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-cpu"></i>
+                        </div>
+                        <h5>智能调度</h5>
+                        <p class="text-muted">基于AI算法的智能调度系统，优化收运路线，提高车辆利用率。</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h5>末端处置监控</h5>
+                        <p class="text-muted">监控处置场运行状态，实时采集环保指标，确保处置过程合规。</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <h5>溯源执法</h5>
+                        <p class="text-muted">完整的垃圾溯源链条，支持违规投放证据收集和执法支持。</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <h5>数据分析报表</h5>
+                        <p class="text-muted">丰富的数据分析和报表功能，支持趋势分析、同比环比分析等。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 系统状态 -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-12 mb-4">
+                    <h3>系统实时状态</h3>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-primary">1,256</h4>
+                            <p class="text-muted mb-0">智能设备</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-success">98.5%</h4>
+                            <p class="text-muted mb-0">设备在线率</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-info">45,678</h4>
+                            <p class="text-muted mb-0">今日投放次数</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-warning">85.2%</h4>
+                            <p class="text-muted mb-0">分类准确率</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>智慧环卫垃圾分类全链条智能监管系统</h5>
+                    <p class="mb-0">基于Spring Boot + Vue.js构建的现代化环卫管理平台</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">版本: 1.0.0</p>
+                    <p class="mb-0">© 2024 Smart Waste Management System</p>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/app.js"></script>
 </body>
 </html>

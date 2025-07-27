@@ -8,6 +8,8 @@ public class TrendDataPoint {
     private Double value;
     private String trend; // "increasing", "decreasing", "stable"
     private Double changeRate;
+    private String unit; // 数值单位
+    private String label; // 数据点标签
 
     // Constructors
     public TrendDataPoint() {}
@@ -42,4 +44,10 @@ public class TrendDataPoint {
 
     public Double getChangeRate() { return changeRate; }
     public void setChangeRate(Double changeRate) { this.changeRate = changeRate; }
+
+    public String getUnit() { return unit; }
+    public void setUnit(String unit) { this.unit = unit; }
+
+    public String getLabel() { return label; }
+    public void setLabel(String label) { this.label = label; }
 }

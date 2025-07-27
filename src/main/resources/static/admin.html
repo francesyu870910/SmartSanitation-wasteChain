@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>垃圾分类智能监管系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+        }
+        .nav-link {
+            color: rgba(255,255,255,0.8) !important;
+            transition: all 0.3s;
+            margin: 2px 0;
+            border-radius: 8px;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+            background-color: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border-radius: 12px;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .status-online { color: #28a745; }
+        .status-offline { color: #dc3545; }
+        .status-maintenance { color: #ffc107; }
+        .alert-critical { background-color: #dc3545; color: white; }
+        .alert-high { background-color: #fd7e14; color: white; }
+        .alert-medium { background-color: #ffc107; color: black; }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h5 class="text-white">
+                            <i class="bi bi-recycle"></i>
+                            垃圾分类智能监管系统
+                        </h5>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" onclick="showDashboard()">
+                                <i class="bi bi-speedometer2"></i> 系统概览
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showDevices()">
+                                <i class="bi bi-cpu"></i> 设备管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showContainers()">
+                                <i class="bi bi-trash"></i> 垃圾桶监控
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showVehicles()">
+                                <i class="bi bi-truck"></i> 车辆调度
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showUsers()">
+                                <i class="bi bi-people"></i> 用户管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showAlerts()">
+                                <i class="bi bi-exclamation-triangle"></i> 报警管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showPoints()">
+                                <i class="bi bi-award"></i> 积分排行
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="reports.html">
+                                <i class="bi bi-graph-up"></i> 高级报表
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区 -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2" id="page-title">系统概览</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshData()">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" onclick="batchCheck()">
+                                <i class="bi bi-check-all"></i> 批量检查
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 内容区域 -->
+                <div id="content-area">
+                    <!-- 内容将在这里动态加载 -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局变量
+        let currentPage = 'dashboard';
+        let charts = {};
+        const baseUrl = '/api/demo';
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            showDashboard();
+            // 每30秒自动刷新数据
+            setInterval(refreshData, 30000);
+        });
+
+        // API调用函数
+        async function apiCall(endpoint) {
+            try {
+                const response = await fetch(baseUrl + endpoint);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API调用失败:', error);
+                return null;
+            }
+        }
+
+        // 显示系统概览
+        async function showDashboard() {
+            setActivePage('dashboard', '系统概览');
+            
+            const content = `
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="metric-card">
+                            <div class="metric-value" id="online-devices">-</div>
+                            <div class="metric-label">在线设备</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="metric-card">
+                            <div class="metric-value" id="active-users">-</div>
+                            <div class="metric-label">活跃用户</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="metric-card">
+                            <div class="metric-value" id="unresolved-alerts">-</div>
+                            <div class="metric-label">未解决报警</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="metric-card">
+                            <div class="metric-value" id="today-disposals">-</div>
+                            <div class="metric-label">今日投放</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold">设备状态分布</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="deviceStatusChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold">最新报警</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="recent-alerts">加载中...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-area').innerHTML = content;
+            await loadDashboardData();
+        }
+
+        // 显示设备管理
+        async function showDevices() {
+            setActivePage('devices', '设备管理');
+            
+            const content = `
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="m-0 font-weight-bold">设备列表</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>设备ID</th>
+                                        <th>设备名称</th>
+                                        <th>设备类型</th>
+                                        <th>位置</th>
+                                        <th>状态</th>
+                                        <th>IP地址</th>
+                                        <th>最后心跳</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="devices-table">
+                                    <tr><td colspan="8" class="loading">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-area').innerHTML = content;
+            await loadDevices();
+        }
+
+        // 显示垃圾桶监控
+        async function showContainers() {
+            setActivePage('containers', '垃圾桶监控');
+            
+            const content = `
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <select class="form-select" id="container-type-filter">
+                            <option value="">所有类型</option>
+                            <option value="KITCHEN">厨余垃圾</option>
+                            <option value="RECYCLABLE">可回收物</option>
+                            <option value="HAZARDOUS">有害垃圾</option>
+                            <option value="OTHER">其他垃圾</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="fullness-filter">
+                            <option value="">所有状态</option>
+                            <option value="high">高满载(>80%)</option>
+                            <option value="medium">中满载(50-80%)</option>
+                            <option value="low">低满载(<50%)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-primary" onclick="filterContainers()">
+                            <i class="bi bi-funnel"></i> 筛选
+                        </button>
+                        <button class="btn btn-success ms-2" onclick="batchCheck()">
+                            <i class="bi bi-check-all"></i> 批量检查
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="m-0 font-weight-bold">垃圾桶列表</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>容器ID</th>
+                                        <th>位置</th>
+                                        <th>垃圾类型</th>
+                                        <th>容量(L)</th>
+                                        <th>满载率</th>
+                                        <th>状态</th>
+                                        <th>最后更新</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="containers-table">
+                                    <tr><td colspan="8" class="loading">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-area').innerHTML = content;
+            await loadContainers();
+        }
+
+        // 显示车辆调度
+        async function showVehicles() {
+            setActivePage('vehicles', '车辆调度');
+            
+            const content = `
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="m-0 font-weight-bold">车辆列表</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>车辆ID</th>
+                                        <th>车牌号</th>
+                                        <th>车辆类型</th>
+                                        <th>载重(吨)</th>
+                                        <th>司机</th>
+                                        <th>当前位置</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vehicles-table">
+                                    <tr><td colspan="8" class="loading">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-area').innerHTML = content;
+            await loadVehicles();
+        }
+
+        // 显示用户管理
+        async function showUsers() {
+            setActivePage('users', '用户管理');
+            
+            const content = `
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="m-0 font-weight-bold">用户列表</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>用户ID</th>
+                                        <th>姓名</th>
+                                        <th>手机号</th>
+                                        <th>地址</th>
+                                        <th>身份证</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table">
+                                    <tr><td colspan="7" class="loading">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-area').innerHTML = content;
+            await loadUsers();
+        }
+
+        // 显示报警管理
+        async function showAlerts() {
+            setActivePage('alerts', '报警管理');
+            
+            const content = `
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="m-0 font-weight-bold">报警列表</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>报警ID</th>
+                                        <th>容器ID</th>
+                                        <th>报警级别</th>
+                                        <th>满载率</th>
+                                        <th>位置</th>
+                                        <th>报警时间</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alerts-table">
+                                    <tr><td colspan="8" class="loading">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-area').innerHTML = content;
+            await loadAlerts();
+        }
+
+        // 显示积分排行
+        async function showPoints() {
+            setActivePage('points', '积分排行');
+            
+            const content = `
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="m-0 font-weight-bold">积分排行榜</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>排名</th>
+                                        <th>用户ID</th>
+                                        <th>姓名</th>
+                                        <th>总积分</th>
+                                        <th>等级</th>
+                                        <th>地址</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="points-table">
+                                    <tr><td colspan="6" class="loading">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-area').innerHTML = content;
+            await loadPoints();
+        }
+
+        // 数据加载函数
+        async function loadDashboardData() {
+            const stats = await apiCall('/dashboard/stats');
+            if (stats) {
+                document.getElementById('online-devices').textContent = stats.onlineDevices;
+                document.getElementById('active-users').textContent = stats.activeUsers;
+                document.getElementById('unresolved-alerts').textContent = stats.unresolvedAlerts;
+                document.getElementById('today-disposals').textContent = stats.todayDisposals;
+            }
+
+            // 加载设备状态图表
+            const devices = await apiCall('/devices');
+            if (devices) {
+                createDeviceStatusChart(devices);
+            }
+
+            // 加载最新报警
+            const alerts = await apiCall('/dashboard/recent-alerts');
+            if (alerts) {
+                displayRecentAlerts(alerts);
+            }
+        }
+
+        async function loadDevices() {
+            const devices = await apiCall('/devices');
+            if (devices) {
+                const tbody = document.getElementById('devices-table');
+                tbody.innerHTML = devices.map(device => `
+                    <tr>
+                        <td>${device.deviceId}</td>
+                        <td>${device.deviceName}</td>
+                        <td><span class="badge bg-info">${getDeviceTypeText(device.deviceType)}</span></td>
+                        <td>${device.location}</td>
+                        <td><span class="status-${device.status.toLowerCase()}">${getStatusText(device.status)}</span></td>
+                        <td>${device.ipAddress}</td>
+                        <td>${formatDateTime(device.lastHeartbeat)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="updateHeartbeat('${device.deviceId}')">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function loadContainers() {
+            const containers = await apiCall('/containers');
+            if (containers) {
+                const tbody = document.getElementById('containers-table');
+                tbody.innerHTML = containers.map(container => `
+                    <tr>
+                        <td>${container.containerId}</td>
+                        <td>${container.location}</td>
+                        <td><span class="badge bg-secondary">${getWasteTypeText(container.wasteType)}</span></td>
+                        <td>${container.capacity}</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar ${getFullnessColor(container.currentFullness)}" 
+                                     style="width: ${(container.currentFullness * 100).toFixed(1)}%">
+                                    ${(container.currentFullness * 100).toFixed(1)}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>${getFullnessStatus(container.currentFullness)}</td>
+                        <td>${formatDateTime(container.lastUpdated)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-success" onclick="checkContainer('${container.containerId}')">
+                                <i class="bi bi-check"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function loadVehicles() {
+            const vehicles = await apiCall('/vehicles');
+            if (vehicles) {
+                const tbody = document.getElementById('vehicles-table');
+                tbody.innerHTML = vehicles.map(vehicle => `
+                    <tr>
+                        <td>${vehicle.vehicleId}</td>
+                        <td><strong>${vehicle.licensePlate}</strong></td>
+                        <td><span class="badge bg-info">${getWasteTypeText(vehicle.vehicleType)}</span></td>
+                        <td>${vehicle.capacity}</td>
+                        <td>${vehicle.driverId}</td>
+                        <td>${vehicle.currentLocation}</td>
+                        <td><span class="badge bg-${getVehicleStatusColor(vehicle.status)}">${getVehicleStatusText(vehicle.status)}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="trackVehicle('${vehicle.vehicleId}')">
+                                <i class="bi bi-geo-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function loadUsers() {
+            const users = await apiCall('/users');
+            if (users) {
+                const tbody = document.getElementById('users-table');
+                tbody.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user.userId}</td>
+                        <td>${user.name}</td>
+                        <td>${user.phone}</td>
+                        <td>${user.address}</td>
+                        <td>${user.idCard}</td>
+                        <td><span class="badge bg-${user.isActive ? 'success' : 'secondary'}">${user.isActive ? '活跃' : '非活跃'}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info" onclick="viewUser('${user.userId}')">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function loadAlerts() {
+            const alerts = await apiCall('/alerts');
+            if (alerts) {
+                const tbody = document.getElementById('alerts-table');
+                tbody.innerHTML = alerts.map(alert => `
+                    <tr>
+                        <td>${alert.alertId}</td>
+                        <td>${alert.containerId}</td>
+                        <td><span class="badge alert-${alert.alertLevel.toLowerCase()}">${getAlertLevelText(alert.alertLevel)}</span></td>
+                        <td>${(alert.fullnessLevel * 100).toFixed(1)}%</td>
+                        <td>${alert.location}</td>
+                        <td>${formatDateTime(alert.alertTime)}</td>
+                        <td><span class="badge bg-${alert.isResolved ? 'success' : 'danger'}">${alert.isResolved ? '已解决' : '未解决'}</span></td>
+                        <td>
+                            ${!alert.isResolved ? `<button class="btn btn-sm btn-success" onclick="resolveAlert('${alert.alertId}')">
+                                <i class="bi bi-check"></i> 解决
+                            </button>` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function loadPoints() {
+            const points = await apiCall('/points/ranking');
+            if (points) {
+                const tbody = document.getElementById('points-table');
+                tbody.innerHTML = points.map(user => `
+                    <tr>
+                        <td><span class="badge bg-primary">#${user.rank}</span></td>
+                        <td>${user.userId}</td>
+                        <td>${user.userName}</td>
+                        <td><strong>${user.totalPoints.toLocaleString()}</strong></td>
+                        <td><span class="badge bg-success">${user.levelName}</span></td>
+                        <td>${user.address}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // 图表创建函数
+        function createDeviceStatusChart(devices) {
+            const ctx = document.getElementById('deviceStatusChart');
+            if (!ctx) return;
+
+            if (charts.deviceStatus) {
+                charts.deviceStatus.destroy();
+            }
+
+            const statusCount = devices.reduce((acc, device) => {
+                acc[device.status] = (acc[device.status] || 0) + 1;
+                return acc;
+            }, {});
+
+            charts.deviceStatus = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCount).map(status => getStatusText(status)),
+                    datasets: [{
+                        data: Object.values(statusCount),
+                        backgroundColor: ['#28a745', '#dc3545', '#ffc107', '#6c757d']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function displayRecentAlerts(alerts) {
+            const container = document.getElementById('recent-alerts');
+            if (!container) return;
+
+            container.innerHTML = alerts.slice(0, 5).map(alert => `
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded alert-${alert.alertLevel.toLowerCase()}">
+                    <div>
+                        <strong>${alert.containerId}</strong><br>
+                        <small>${alert.location}</small>
+                    </div>
+                    <div class="text-end">
+                        <div>${(alert.fullnessLevel * 100).toFixed(1)}%</div>
+                        <small>${formatDateTime(alert.alertTime)}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 工具函数
+        function setActivePage(page, title) {
+            currentPage = page;
+            document.getElementById('page-title').textContent = title;
+            
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            const navMap = {
+                'dashboard': 0, 'devices': 1, 'containers': 2, 'vehicles': 3,
+                'users': 4, 'alerts': 5, 'points': 6
+            };
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            if (navMap[page] !== undefined && navLinks[navMap[page]]) {
+                navLinks[navMap[page]].classList.add('active');
+            }
+        }
+
+        function formatDateTime(dateTimeString) {
+            if (!dateTimeString) return '-';
+            const date = new Date(dateTimeString);
+            return date.toLocaleString('zh-CN', {
+                month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function getDeviceTypeText(type) {
+            const typeMap = {
+                'SMART_BIN': '智能垃圾桶',
+                'FACE_RECOGNITION': '人脸识别',
+                'QR_SCANNER': '二维码扫描',
+                'IC_CARD_READER': 'IC卡读取',
+                'WEIGHT_SENSOR': '称重传感器',
+                'GPS_TRACKER': 'GPS跟踪',
+                'CAMERA': '监控摄像头',
+                'FULLNESS_SENSOR': '满溢检测器'
+            };
+            return typeMap[type] || type;
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'ONLINE': '在线',
+                'OFFLINE': '离线',
+                'MAINTENANCE': '维护中'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getWasteTypeText(type) {
+            const typeMap = {
+                'KITCHEN': '厨余垃圾',
+                'RECYCLABLE': '可回收物',
+                'HAZARDOUS': '有害垃圾',
+                'OTHER': '其他垃圾'
+            };
+            return typeMap[type] || type;
+        }
+
+        function getFullnessColor(fullness) {
+            if (fullness >= 0.9) return 'bg-danger';
+            if (fullness >= 0.7) return 'bg-warning';
+            return 'bg-success';
+        }
+
+        function getFullnessStatus(fullness) {
+            if (fullness >= 0.9) return '紧急';
+            if (fullness >= 0.7) return '警告';
+            return '正常';
+        }
+
+        function getVehicleStatusColor(status) {
+            const colorMap = {
+                'COLLECTING': 'primary',
+                'TRANSPORTING': 'info',
+                'IDLE': 'success',
+                'MAINTENANCE': 'warning'
+            };
+            return colorMap[status] || 'secondary';
+        }
+
+        function getVehicleStatusText(status) {
+            const statusMap = {
+                'COLLECTING': '收集中',
+                'TRANSPORTING': '运输中',
+                'IDLE': '空闲',
+                'MAINTENANCE': '维护中'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getAlertLevelText(level) {
+            const levelMap = {
+                'CRITICAL': '紧急',
+                'HIGH': '高级',
+                'MEDIUM': '中级',
+                'LOW': '低级'
+            };
+            return levelMap[level] || level;
+        }
+
+        // 操作函数
+        async function refreshData() {
+            switch (currentPage) {
+                case 'dashboard': await loadDashboardData(); break;
+                case 'devices': await loadDevices(); break;
+                case 'containers': await loadContainers(); break;
+                case 'vehicles': await loadVehicles(); break;
+                case 'users': await loadUsers(); break;
+                case 'alerts': await loadAlerts(); break;
+                case 'points': await loadPoints(); break;
+            }
+            showNotification('数据已刷新', 'success');
+        }
+
+        async function batchCheck() {
+            const result = await apiCall('/containers/batch-check');
+            if (result && result.success) {
+                showNotification(`批量检查完成：检查了${result.checkedContainers}个容器，发现${result.newAlerts}个新报警`, 'success');
+                if (currentPage === 'containers') await loadContainers();
+                if (currentPage === 'alerts') await loadAlerts();
+            }
+        }
+
+        async function updateHeartbeat(deviceId) {
+            const result = await fetch(`${baseUrl}/devices/${deviceId}/heartbeat`, { method: 'POST' });
+            if (result.ok) {
+                showNotification('设备心跳更新成功', 'success');
+                await loadDevices();
+            }
+        }
+
+        async function resolveAlert(alertId) {
+            const result = await fetch(`${baseUrl}/alerts/${alertId}/resolve`, { method: 'POST' });
+            if (result.ok) {
+                showNotification('报警已解决', 'success');
+                await loadAlerts();
+                if (currentPage === 'dashboard') await loadDashboardData();
+            }
+        }
+
+        function checkContainer(containerId) {
+            showNotification(`正在检查容器 ${containerId}`, 'info');
+        }
+
+        function trackVehicle(vehicleId) {
+            showNotification(`正在跟踪车辆 ${vehicleId}`, 'info');
+        }
+
+        function viewUser(userId) {
+            showNotification(`查看用户 ${userId} 详情`, 'info');
+        }
+
+        function filterContainers() {
+            showNotification('筛选功能开发中', 'info');
+        }
+
+        function showNotification(message, type = 'info', duration = 3000) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, duration);
+        }
+    </script>
+</body>
+</html>

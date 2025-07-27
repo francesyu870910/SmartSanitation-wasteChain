@@ -1,46 +1,57 @@
 server:
   port: 8080
+  servlet:
+    context-path: /
 
 spring:
   application:
     name: smart-waste-management
   
-  # 数据库配置 - 使用H2内存数据库进行演示
+  # H2 数据库配置（用于演示）
   datasource:
     url: jdbc:h2:mem:smartwaste
     driver-class-name: org.h2.Driver
     username: sa
     password: 
   
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  
   # H2控制台配置
   h2:
     console:
       enabled: true
       path: /h2-console
-  
-  # JPA配置
-  jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
 
 # 日志配置
 logging:
   level:
-    com.smartwaste: INFO
-    org.springframework: WARN
-    org.hibernate: WARN
+    com.smartwaste: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
 # 管理端点配置
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics
   endpoint:
     health:
       show-details: always
+
+# 应用信息
+info:
+  app:
+    name: 智慧环卫垃圾分类全链条智能监管系统
+    description: Smart Waste Management System
+    version: 1.0.0

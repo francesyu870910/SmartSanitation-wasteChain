@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>报表系统测试 - 智慧环卫系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        .test-result {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">报表系统功能测试</h1>
+        
+        <!-- 实时数据快照测试 -->
+        <div class="test-section">
+            <h3>1. 实时数据快照测试</h3>
+            <button class="btn btn-primary" onclick="testRealTimeSnapshot()">测试实时数据快照</button>
+            <div id="realtime-result" class="test-result d-none"></div>
+        </div>
+
+        <!-- 日报生成测试 -->
+        <div class="test-section">
+            <h3>2. 日报生成测试</h3>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <select class="form-select" id="daily-report-type">
+                        <option value="收运">收运报表</option>
+                        <option value="投放">投放报表</option>
+                        <option value="处置">处置报表</option>
+                        <option value="综合">综合报表</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="date" class="form-control" id="daily-date" value="2024-01-15">
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary" onclick="testDailyReport()">生成日报</button>
+                </div>
+            </div>
+            <div id="daily-result" class="test-result d-none"></div>
+        </div>
+
+        <!-- 月报生成测试 -->
+        <div class="test-section">
+            <h3>3. 月报生成测试</h3>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <select class="form-select" id="monthly-report-type">
+                        <option value="收运">收运报表</option>
+                        <option value="投放">投放报表</option>
+                        <option value="处置">处置报表</option>
+                        <option value="综合">综合报表</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control" id="monthly-year" value="2024" min="2020" max="2030">
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control" id="monthly-month" value="1" min="1" max="12">
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary" onclick="testMonthlyReport()">生成月报</button>
+                </div>
+            </div>
+            <div id="monthly-result" class="test-result d-none"></div>
+        </div>
+
+        <!-- 趋势分析测试 -->
+        <div class="test-section">
+            <h3>4. 趋势分析测试</h3>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <select class="form-select" id="trend-metric">
+                        <option value="收运量">收运量</option>
+                        <option value="回收率">回收率</option>
+                        <option value="用户参与度">用户参与度</option>
+                        <option value="分类准确率">分类准确率</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="date" class="form-control" id="trend-start" value="2024-01-01">
+                </div>
+                <div class="col-md-3">
+                    <input type="date" class="form-control" id="trend-end" value="2024-01-31">
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary" onclick="testTrendAnalysis()">分析趋势</button>
+                </div>
+            </div>
+            <div id="trend-result" class="test-result d-none"></div>
+        </div>
+
+        <!-- 自定义报表测试 -->
+        <div class="test-section">
+            <h3>5. 自定义报表测试</h3>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <button class="btn btn-primary me-2" onclick="testCreateCustomReport()">创建自定义报表</button>
+                    <button class="btn btn-secondary me-2" onclick="testListCustomReports()">查看报表列表</button>
+                    <button class="btn btn-info" onclick="testGetDataFields()">获取数据字段</button>
+                </div>
+            </div>
+            <div id="custom-result" class="test-result d-none"></div>
+        </div>
+
+        <!-- 同比环比分析测试 -->
+        <div class="test-section">
+            <h3>6. 同比环比分析测试</h3>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <select class="form-select" id="comparison-metric">
+                        <option value="收运量">收运量</option>
+                        <option value="投放量">投放量</option>
+                        <option value="回收率">回收率</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" id="comparison-type">
+                        <option value="YOY">同比分析</option>
+                        <option value="MOM">环比分析</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary" onclick="testComparisonAnalysis()">生成对比分析</button>
+                </div>
+            </div>
+            <div id="comparison-result" class="test-result d-none"></div>
+        </div>
+
+        <!-- 多维度分析测试 -->
+        <div class="test-section">
+            <h3>7. 多维度分析测试</h3>
+            <button class="btn btn-primary" onclick="testMultiDimensionalAnalysis()">测试多维度分析</button>
+            <div id="multidim-result" class="test-result d-none"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const baseUrl = '/api/advanced-reports';
+
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(baseUrl + endpoint, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API调用失败:', error);
+                throw error;
+            }
+        }
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.classList.remove('d-none');
+            element.innerHTML = `
+                <div class="${isError ? 'error' : 'success'}">
+                    ${isError ? '❌ 错误: ' : '✅ 成功: '}
+                </div>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+        }
+
+        async function testRealTimeSnapshot() {
+            try {
+                const data = await apiCall('/real-time-snapshot');
+                showResult('realtime-result', data);
+            } catch (error) {
+                showResult('realtime-result', error.message, true);
+            }
+        }
+
+        async function testDailyReport() {
+            try {
+                const reportType = document.getElementById('daily-report-type').value;
+                const date = document.getElementById('daily-date').value;
+                const data = await apiCall(`/daily?date=${date}T00:00:00&reportType=${reportType}`);
+                showResult('daily-result', data);
+            } catch (error) {
+                showResult('daily-result', error.message, true);
+            }
+        }
+
+        async function testMonthlyReport() {
+            try {
+                const reportType = document.getElementById('monthly-report-type').value;
+                const year = document.getElementById('monthly-year').value;
+                const month = document.getElementById('monthly-month').value;
+                const data = await apiCall(`/monthly?year=${year}&month=${month}&reportType=${reportType}`);
+                showResult('monthly-result', data);
+            } catch (error) {
+                showResult('monthly-result', error.message, true);
+            }
+        }
+
+        async function testTrendAnalysis() {
+            try {
+                const metric = document.getElementById('trend-metric').value;
+                const startDate = document.getElementById('trend-start').value;
+                const endDate = document.getElementById('trend-end').value;
+                const data = await apiCall(`/trend-analysis?metric=${metric}&startDate=${startDate}&endDate=${endDate}`);
+                showResult('trend-result', data);
+            } catch (error) {
+                showResult('trend-result', error.message, true);
+            }
+        }
+
+        async function testCreateCustomReport() {
+            try {
+                const customReport = {
+                    reportName: '测试自定义报表',
+                    description: '这是一个测试用的自定义报表',
+                    dataFields: ['收运量', '回收率', '用户参与度'],
+                    chartType: 'LINE',
+                    isPublic: true,
+                    createdBy: 'test-user'
+                };
+                
+                const data = await apiCall('/custom', {
+                    method: 'POST',
+                    body: JSON.stringify(customReport)
+                });
+                showResult('custom-result', data);
+            } catch (error) {
+                showResult('custom-result', error.message, true);
+            }
+        }
+
+        async function testListCustomReports() {
+            try {
+                const data = await apiCall('/custom');
+                showResult('custom-result', data);
+            } catch (error) {
+                showResult('custom-result', error.message, true);
+            }
+        }
+
+        async function testGetDataFields() {
+            try {
+                const data = await apiCall('/data-fields');
+                showResult('custom-result', data);
+            } catch (error) {
+                showResult('custom-result', error.message, true);
+            }
+        }
+
+        async function testComparisonAnalysis() {
+            try {
+                const metric = document.getElementById('comparison-metric').value;
+                const comparisonType = document.getElementById('comparison-type').value;
+                const currentStart = '2024-01-01T00:00:00';
+                const currentEnd = '2024-01-31T23:59:59';
+                
+                const data = await apiCall(`/comparison-analysis?metric=${metric}&currentPeriodStart=${currentStart}&currentPeriodEnd=${currentEnd}&comparisonType=${comparisonType}`);
+                showResult('comparison-result', data);
+            } catch (error) {
+                showResult('comparison-result', error.message, true);
+            }
+        }
+
+        async function testMultiDimensionalAnalysis() {
+            try {
+                const requestData = {
+                    dimensions: ['区域', '垃圾类型'],
+                    metrics: ['收运量', '回收率'],
+                    filters: {}
+                };
+                
+                const data = await apiCall('/multi-dimensional-analysis', {
+                    method: 'POST',
+                    body: JSON.stringify(requestData)
+                });
+                showResult('multidim-result', data);
+            } catch (error) {
+                showResult('multidim-result', error.message, true);
+            }
+        }
+    </script>
+</body>
+</html>
